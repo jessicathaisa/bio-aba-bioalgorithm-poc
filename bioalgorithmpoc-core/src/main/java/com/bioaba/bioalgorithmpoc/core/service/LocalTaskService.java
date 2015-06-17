@@ -2,6 +2,7 @@ package com.bioaba.bioalgorithmpoc.core.service;
 
 import javax.inject.Inject;
 
+import org.jvnet.jaxb2_commons.lang.StringUtils;
 import org.springframework.stereotype.Service;
 
 import com.bioaba.bioalgorithmpoc.persistence.entity.LocalTask;
@@ -26,7 +27,13 @@ public class LocalTaskService {
 	}
 
 	public LocalTask save( LocalTask entity){
+		if(entity.getId() == null && StringUtils.isEmpty(entity.getStatus()))
+			entity.setStatus("RECEIVED");
 		repository.save(entity);
 		return entity;
+	}
+	
+	public LocalTask findBytaskKeyBioABA(String taskId){
+		return this.repository.findBytaskKeyBioABA(taskId);
 	}
 }

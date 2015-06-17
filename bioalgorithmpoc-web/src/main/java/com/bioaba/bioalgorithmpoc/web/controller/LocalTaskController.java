@@ -1,11 +1,12 @@
 package com.bioaba.bioalgorithmpoc.web.controller;
 
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Map;
 
 import javax.inject.Inject;
 
+import org.jvnet.jaxb2_commons.lang.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.util.Base64Utils;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 
@@ -38,19 +40,19 @@ public class LocalTaskController {
 		System.out.println(ex.toString());
 	}
 	
+	@RequestMapping(value = "/{taskKey}", method = RequestMethod.GET)
+	@ResponseStatus(HttpStatus.OK)
+	public @ResponseBody String find(@RequestParam Long taskKey){
+		LocalTask entity = this.facade.find(taskKey);
+		if(entity.getResult() != null){
+			return "";
+		}
+		return Base64.getEncoder().encodeToString(entity.getResult());
+	}
+	
 	@RequestMapping(method = RequestMethod.POST)
 	@ResponseStatus(HttpStatus.CREATED)
-	public @ResponseBody String save(@RequestBody Map<String, Object> map) {
-			/*
-			@RequestPart(value = "query", required = true) MultipartFile query,
-			@RequestPart(value = "taskKey", required = true) String taskKey,
-			@RequestPart(value = "algorithmName", required = true) String algorithmName,
-			@RequestPart(value = "parameters", required = true) Map<String, String> parameters,
-			@RequestPart(value = "databaseName", required = true) String databaseName,
-			@RequestPart(value = "databaseURL", required = true) String databaseURL,
-			@RequestPart(value = "callbackURL", required = true) String callbackURL
-			*/
-		
+	public @ResponseBody String save(@RequestBody Map<String, Object> map) {		
 		byte[] query = Base64Utils.decodeFromString((String)map.get("query"));
 		String taskKey = (String) map.get("taskKey");
 		String algorithmName = (String) map.get("algorithmName");

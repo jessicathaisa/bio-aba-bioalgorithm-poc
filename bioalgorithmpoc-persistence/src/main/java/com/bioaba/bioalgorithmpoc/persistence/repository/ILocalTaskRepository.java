@@ -8,4 +8,5 @@ import com.bioaba.bioalgorithmpoc.persistence.entity.LocalTask;
 @Repository
 public interface ILocalTaskRepository extends JpaRepository<LocalTask, Long> {
 
+	public LocalTask findBytaskKeyBioABA(String taskId);
 }
