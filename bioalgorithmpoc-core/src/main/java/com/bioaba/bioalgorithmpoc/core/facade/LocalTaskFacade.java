@@ -5,7 +5,9 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
 
 import javax.inject.Inject;
 import javax.transaction.Transactional;
@@ -13,6 +15,7 @@ import javax.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.RestTemplate;
 
 import com.bioaba.bioalgorithmpoc.core.events.LocalTaskSavedEvent;
 import com.bioaba.bioalgorithmpoc.core.service.LocalTaskService;
@@ -24,9 +27,6 @@ import com.bioaba.bioalgorithmpoc.persistence.entity.LocalTaskParameter;
 public class LocalTaskFacade {
 
 	private LocalTaskService taskService;
-
-	@Inject
-	private ApplicationEventPublisher eventPublisher;
 
 	@Autowired
 	public LocalTaskFacade(LocalTaskService taskService) {
@@ -66,9 +66,6 @@ public class LocalTaskFacade {
 		}
 		taskService.save(entity);
 
-		eventPublisher.publishEvent(new LocalTaskSavedEvent(this, entity
-				.getId()));
-
 		return entity;
 	}
 	
@@ -77,15 +74,7 @@ public class LocalTaskFacade {
 	public void runTask(Long taskId) {
 		LocalTask task = taskService.find(taskId);
 		
-		try{
-			/*
-			LocalTask task = new LocalTask();
-			task.setId((long) 123);
-			task.setDatabaseName("mouse.1.protein.faa");
-			task.setQuery("/home/jalmeida/teste/query.faa");
-			task.setParameters(new ArrayList<LocalTaskParameter>());
-			task.setAlgorithmName("blastp"); */
-	
+		try{	
 			String cmdBusca = "ls /home/ec2-user";
 			String output = executeCommand(cmdBusca);
 	
@@ -139,9 +128,39 @@ public class LocalTaskFacade {
 			task.setStatus("FINISHED WITH ERRORS");			
 			taskService.save(task);
 		}
+		
+		// Sent PUT callback's URL
+		putResultToTaskManager(task);
 
 	}
 
+	
+	private void putResultToTaskManager(LocalTask task){
+		RestTemplate restTemplate = new RestTemplate();
+		
+		try {
+			String URL = task.getCallbackURL() + "/" + task.getTaskKeyBioABA();
+			Map<String, Object> parts = new HashMap<String, Object>();
+			parts.put("algorithmName", task.getAlgorithmName());
+			Map<String, String> map = new HashMap<String, String>();
+			String result = "";
+			if(task.getResult() == null){
+				result = Base64.getEncoder().encodeToString(task.getResult());
+			}
+			
+			map.put("result", result);
+			map.put("status", task.getStatus());
+			
+
+			restTemplate.put(URL, map);
+			
+		} catch (ArrayIndexOutOfBoundsException ex) {
+			System.out.println("Error while receiving response of algorithm: Wrong Location");
+		} catch (Exception ex) {
+			System.out.println("Error while receiving response of algorithm: Invalid URL");
+		}
+	}
+	
 	private String executeCommand(String command) {
 
 		StringBuffer output = new StringBuffer();

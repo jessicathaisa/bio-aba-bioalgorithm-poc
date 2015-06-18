@@ -2,13 +2,18 @@ package com.bioaba.bioalgorithmpoc.persistence.entity;
 
 import java.util.List;
 
+import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
 import javax.persistence.Entity;
 import javax.persistence.FetchType;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
+import javax.persistence.ManyToOne;
+import javax.persistence.OneToMany;
 import javax.persistence.Table;
+
+import org.hibernate.annotations.Cascade;
 
 @Entity
 @Table(name="localtask")
@@ -25,7 +30,8 @@ public class LocalTask {
 	private String query;
 
 	@Column(name="parameters")
-	@ElementCollection(fetch=FetchType.EAGER)
+	
+	@OneToMany(fetch=FetchType.EAGER, cascade=CascadeType.ALL)
 	private List<LocalTaskParameter> parameters;
 
 	@Column(name="databaseName")
