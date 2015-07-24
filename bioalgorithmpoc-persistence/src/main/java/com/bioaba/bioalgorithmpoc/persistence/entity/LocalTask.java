@@ -50,7 +50,7 @@ public class LocalTask {
 	private String taskKeyBioABA;
 	
 	@Column(name="result")
-	private byte[] result;
+	private String result;
 
 	public Long getId() {
 		return id;
@@ -116,11 +116,11 @@ public class LocalTask {
 		this.taskKeyBioABA = taskKeyBioABA;
 	}
 
-	public byte[] getResult() {
+	public String getResult() {
 		return result;
 	}
 
-	public void setResult(byte[] result) {
+	public void setResult(String result) {
 		this.result = result;
 	}
 

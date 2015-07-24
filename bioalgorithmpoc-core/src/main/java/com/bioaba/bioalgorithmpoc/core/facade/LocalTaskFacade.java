@@ -4,20 +4,18 @@ import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.FileReader;
 import java.io.InputStreamReader;
 import java.util.Base64;
 import java.util.HashMap;
 import java.util.Map;
 
-import javax.inject.Inject;
 import javax.transaction.Transactional;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 
-import com.bioaba.bioalgorithmpoc.core.events.LocalTaskSavedEvent;
 import com.bioaba.bioalgorithmpoc.core.service.LocalTaskService;
 import com.bioaba.bioalgorithmpoc.persistence.entity.LocalTask;
 import com.bioaba.bioalgorithmpoc.persistence.entity.LocalTaskParameter;
@@ -50,15 +48,16 @@ public class LocalTaskFacade {
 		
 		String caminho = "";
 		try {
-			File file = new File("/home/ec2-user/query_" + entity.getTaskKeyBioABA());
+			File file = new File("/home/ec2-user/query_" + entity.getTaskKeyBioABA() + ".faa");
 			FileOutputStream os = new FileOutputStream(file);
 			BufferedOutputStream bos = new BufferedOutputStream(os);
-			
-			bos.write(query);
+			String aux = new String(query).substring(10).replace("\\n", "\n");
+			aux = aux.substring(0, aux.length() - 2 );
+			bos.write(aux.getBytes());
 			bos.close();
 			os.close();
 
-			caminho = "/home/ec2-user/query_" + entity.getTaskKeyBioABA();
+			caminho = "/home/ec2-user/query_" + entity.getTaskKeyBioABA() + ".faa";
 
 			entity.setQuery(caminho);
 		} catch (Exception ex) {
@@ -89,7 +88,7 @@ public class LocalTaskFacade {
 			}
 	
 			String cmdCriaPastaAuxiliar = "mkdir /home/ec2-user/banco" + taskId;
-			String cmdExcluiPastaAuxiliar = "rm /home/ec2-user/banco" + taskId;
+			String cmdExcluiPastaAuxiliar = "rm -r /home/ec2-user/banco" + taskId;
 			String cmdRodaAlgoritmo = "/home/ec2-user/./diamond ";
 			cmdRodaAlgoritmo += task.getAlgorithmName() + " ";
 			cmdRodaAlgoritmo += "-d " + "/home/ec2-user/" + task.getDatabaseName() + " ";
@@ -120,7 +119,7 @@ public class LocalTaskFacade {
 			System.out.println(output);
 	
 			task.setStatus("SUCCESSFULLY COMPLETED");
-			task.setResult(output.getBytes());
+			task.setResult("/home/ec2-user/resultado_" + taskId + ".m8");
 			
 			taskService.save(task);
 		}
@@ -133,6 +132,25 @@ public class LocalTaskFacade {
 		putResultToTaskManager(task);
 
 	}
+	
+	public String findResult(String path){
+		String text = "";
+		try{
+			BufferedReader br = new BufferedReader(new FileReader(path));
+			 
+			String line = null;
+			while ((line = br.readLine()) != null) {
+				text += line + "\n";
+			}
+		 
+			br.close();
+		}
+		catch(Exception ex){
+			System.out.println(ex.getMessage());
+		}
+		
+		return text;
+	}
 
 	
 	private void putResultToTaskManager(LocalTask task){
@@ -143,10 +161,7 @@ public class LocalTaskFacade {
 			Map<String, Object> parts = new HashMap<String, Object>();
 			parts.put("algorithmName", task.getAlgorithmName());
 			Map<String, String> map = new HashMap<String, String>();
-			String result = "";
-			if(task.getResult() == null){
-				result = Base64.getEncoder().encodeToString(task.getResult());
-			}
+			String result = Base64.getEncoder().encodeToString((findResult(task.getResult())).getBytes());
 			
 			map.put("result", result);
 			map.put("status", task.getStatus());

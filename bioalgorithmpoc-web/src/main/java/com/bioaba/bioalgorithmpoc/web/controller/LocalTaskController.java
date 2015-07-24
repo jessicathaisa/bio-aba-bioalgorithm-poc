@@ -52,7 +52,7 @@ public class LocalTaskController {
 		
 		LocalTask entity = this.facade.find(taskKey);
 		if(entity.getResult() == null){
-			result = Base64.getEncoder().encodeToString(entity.getResult());
+			result = Base64.getEncoder().encodeToString(facade.findResult(entity.getResult()).getBytes());
 		}
 		
 		map.put("result", result);
@@ -63,7 +63,7 @@ public class LocalTaskController {
 	@RequestMapping(method = RequestMethod.POST)
 	@ResponseStatus(HttpStatus.CREATED)
 	public @ResponseBody String save(@RequestBody Map<String, Object> map) {		
-		byte[] query = Base64Utils.decodeFromString((String)map.get("query"));
+		byte[] query = Base64Utils.decodeFromString((String) map.get("query"));
 		String taskKey = (String) map.get("taskKey");
 		String algorithmName = (String) map.get("algorithmName");
 		Map<String, String> parameters = (Map<String, String>) map.get("parameters");
